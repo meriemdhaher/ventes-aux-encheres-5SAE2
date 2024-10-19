@@ -2,7 +2,7 @@ import { Body, Caption, Container, Title } from "../../router";
 import { IoIosStar, IoIosStarHalf, IoIosStarOutline } from "react-icons/io";
 import { commonClassNameOfInput } from "../../components/common/Design";
 import { AiOutlinePlus } from "react-icons/ai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const ProductsDetailsPage = () => {
   const [activeTab, setActiveTab] = useState("description");
@@ -96,6 +96,9 @@ export const ProductsDetailsPage = () => {
               <button className={`rounded-md px-10 py-4 text-black shadow-s3 ${activeTab === "auctionHistory" ? "bg-green text-white" : "bg-white"}`} onClick={() => handleTabClick("auctionHistory")}>
                 Auction History
               </button>
+              <button className={`rounded-md px-10 py-4 text-black shadow-s3 ${activeTab === "liveChat" ? "bg-green text-white" : "bg-white"}`} onClick={() => handleTabClick("liveChat")}>
+                Live Chat
+              </button>
               <button className={`rounded-md px-10 py-4 text-black shadow-s3 ${activeTab === "reviews" ? "bg-green text-white" : "bg-white"}`} onClick={() => handleTabClick("reviews")}>
                 Reviews(2)
               </button>
@@ -177,6 +180,8 @@ export const ProductsDetailsPage = () => {
                 </div>
               )}
               {activeTab === "auctionHistory" && <AuctionHistory />}
+              {activeTab === "liveChat" && <LiveChat />}
+
               {activeTab === "reviews" && (
                 <div className="reviews-tab shadow-s3 p-8 rounded-md">
                   <Title level={5} className=" font-normal">
@@ -239,5 +244,106 @@ export const AuctionHistory = () => {
         </div>
       </div>
     </>
+  );
+};
+
+export const LiveChat = () => {
+  const [messages, setMessages] = useState([
+    { user: "System", text: "Welcome to the live chat! Please place your bids here." },
+    { user: "John Doe", text: "Is the auction still open?" },
+    { user: "Admin", text: "Yes, bidding will close in 30 minutes." },
+    { user: "John Doe", text: "Okay, I'll place my bid now." },
+    { user: "Jane Smith", text: "I bid $400!" },
+  ]);
+
+  const [newMessage, setNewMessage] = useState("");
+  const [notification, setNotification] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const notificationSound = new Audio("/audio.wav"); // Path to sound file
+
+  // Handle sending a new message
+  const handleSendMessage = () => {
+    if (newMessage.trim() !== "") {
+      const newEntry = { user: "You", text: newMessage };
+      setMessages([...messages, newEntry]);
+      setNewMessage(""); // Clear input after sending
+      setNotification("New message !");
+      notificationSound.play(); // Play sound
+    }
+  };
+
+  // Automatically hide notification after a few seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  // Update the tab title with unread messages count
+  useEffect(() => {
+    if (unreadCount > 0) {
+      document.title = `(${unreadCount}) Live Chat - Bidding Site`;
+    } else {
+      document.title = `Live Chat - Bidding Site`;
+    }
+  }, [unreadCount]);
+
+  // Increment unread count when new message is sent
+  useEffect(() => {
+    if (messages.length > 0) {
+      setUnreadCount((prev) => prev + 1);
+    }
+  }, [messages]);
+
+  // Mark messages as read when user sends a new message
+  const handleNewMessage = () => {
+    handleSendMessage();
+    setUnreadCount(0); // Reset unread messages count
+  };
+
+  return (
+    <div className="relative shadow-s1 p-8 rounded-lg h-[60vh] flex flex-col">
+      {/* Toaster Notification fixed on the viewport */}
+      {notification && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-green p-4 rounded-lg shadow-lg z-50 border border-black">
+          {notification}
+        </div>
+      )}
+
+      <Title level={5} className="font-normal">
+        Live Chat for Biddings
+      </Title>
+      <hr className="my-5" />
+
+      {/* Chat History Section */}
+      <div className="flex-grow overflow-y-auto mb-5 p-3 bg-gray-100 rounded-lg">
+        {messages.map((msg, index) => (
+          <div key={index} className={`mb-3 ${msg.user === "You" ? "text-right" : ""}`}>
+            <Caption className="font-bold">{msg.user}:</Caption>
+            <Body className="bg-white p-2 rounded-md inline-block">{msg.text}</Body>
+          </div>
+        ))}
+      </div>
+
+      {/* Input Box and Send Button */}
+      <div className="flex gap-3">
+        <input
+          type="text"
+          className="flex-grow p-3 border rounded-md"
+          placeholder="Type your message here..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+        />
+        <button
+          onClick={handleNewMessage}
+          className="bg-green px-8 py-2 rounded-full text-primary shadow-md">
+          Send
+        </button>
+      </div>
+    </div>
   );
 };
