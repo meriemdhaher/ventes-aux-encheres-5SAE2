@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
-// design
+// Design
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
 import { IoSearchOutline } from "react-icons/io5";
 import { Container, CustomNavLink, CustomNavLinkList, ProfileCard } from "../../router";
@@ -24,6 +24,7 @@ export const Header = () => {
       setIsOpen(false);
     }
   };
+
   const handleScroll = () => {
     setIsScrolled(window.scrollY > 0);
   };
@@ -41,10 +42,16 @@ export const Header = () => {
   // Check if it's the home page
   const isHomePage = location.pathname === "/";
 
+  const headerClass = isHomePage
+    ? `header py-1 bg-primary ${isScrolled ? "scrolled" : ""}`
+    : `header bg-white shadow-s1 ${isScrolled ? "scrolled" : ""}`;
+
+  const iconColor = isScrolled || !isHomePage ? "text-black" : "text-white";
   const role = "buyer";
+
   return (
     <>
-      <header className={isHomePage ? `header py-1 bg-primary ${isScrolled ? "scrolled" : ""}` : `header bg-white shadow-s1 ${isScrolled ? "scrolled" : ""}`}>
+      <header className={headerClass}>
         <Container>
           <nav className="p-4 flex justify-between items-center relative">
             <div className="flex items-center gap-14">
@@ -58,25 +65,33 @@ export const Header = () => {
               <div className="hidden lg:flex items-center justify-between gap-8">
                 {menulists.map((list) => (
                   <li key={list.id} className="capitalize list-none">
-                    <CustomNavLinkList href={list.path} isActive={location.pathname === list.path} className={`${isScrolled || !isHomePage ? "text-black" : "text-white"}`}>
+                    <CustomNavLinkList
+                      href={list.path}
+                      isActive={location.pathname === list.path}
+                      className={`${isScrolled || !isHomePage ? "text-black" : "text-white"}`}
+                    >
                       {list.link}
                     </CustomNavLinkList>
                   </li>
                 ))}
               </div>
             </div>
+
             <div className="flex items-center gap-8 icons">
               <div className="hidden lg:flex lg:items-center lg:gap-8">
-                <IoSearchOutline size={23} className={`${isScrolled || !isHomePage ? "text-black" : "text-white"}`} />
+                <IoSearchOutline size={23} className={iconColor} />
                 {role === "buyer" && (
-                  <CustomNavLink href="/seller/login" className={`${isScrolled || !isHomePage ? "text-black" : "text-white"}`}>
+                  <CustomNavLink href="/seller/login" className={iconColor}>
                     Become a Seller
                   </CustomNavLink>
                 )}
-                <CustomNavLink href="/login" className={`${isScrolled || !isHomePage ? "text-black" : "text-white"}`}>
+                <CustomNavLink href="/login" className={iconColor}>
                   Sign in
                 </CustomNavLink>
-                <CustomNavLink href="/register" className={`${!isHomePage || isScrolled ? "bg-green" : "bg-white"} px-8 py-2 rounded-full text-primary shadow-md`}>
+                <CustomNavLink
+                  href="/register"
+                  className={`${!isHomePage || isScrolled ? "bg-green" : "bg-white"} px-8 py-2 rounded-full text-primary shadow-md`}
+                >
                   Join
                 </CustomNavLink>
                 <CustomNavLink href="/dashboard">
