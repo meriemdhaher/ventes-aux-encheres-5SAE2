@@ -3,6 +3,7 @@ import { IoIosStar, IoIosStarHalf, IoIosStarOutline } from "react-icons/io";
 import { commonClassNameOfInput } from "../../components/common/Design";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useEffect, useState } from "react";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 export const ProductsDetailsPage = () => {
   const [activeTab, setActiveTab] = useState("description");
@@ -182,17 +183,7 @@ export const ProductsDetailsPage = () => {
               {activeTab === "auctionHistory" && <AuctionHistory />}
               {activeTab === "liveChat" && <LiveChat />}
 
-              {activeTab === "reviews" && (
-                <div className="reviews-tab shadow-s3 p-8 rounded-md">
-                  <Title level={5} className=" font-normal">
-                    Reviews
-                  </Title>
-                  <hr className="my-5" />
-                  <Title level={5} className=" font-normal text-red-500">
-                    Cooming Soon!
-                  </Title>
-                </div>
-              )}
+              {activeTab === "reviews" && <Reviews />}
               {activeTab === "moreProducts" && (
                 <div className="more-products-tab shadow-s3 p-8 rounded-md">
                   <h1>More Products</h1>
@@ -247,89 +238,308 @@ export const AuctionHistory = () => {
   );
 };
 
-export const LiveChat = () => {
-  const [messages, setMessages] = useState([
-    { user: "System", text: "Welcome to the live chat! Please place your bids here." },
-    { user: "John Doe", text: "Is the auction still open?" },
-    { user: "Admin", text: "Yes, bidding will close in 30 minutes." },
-    { user: "John Doe", text: "Okay, I'll place my bid now." },
-    { user: "Jane Smith", text: "I bid $400!" },
-  ]);
 
-  const [newMessage, setNewMessage] = useState("");
+
+export const Reviews = () => {
+  const [reviews, setReviews] = useState([]);
+  const [newRating, setNewRating] = useState(0);
+  const [newComment, setNewComment] = useState("");
+  const [editingReviewId, setEditingReviewId] = useState(null); // Track the review being edited
   const [notification, setNotification] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  const notificationSound = new Audio("/audio.wav"); // Path to sound file
+  // Fetch reviews from the backend
+  const fetchReviews = async () => {
+    const response = await fetch("http://localhost:8084/api/avis");
+    const data = await response.json();
+    setReviews(data);
+  };
 
-  // Handle sending a new message
-  const handleSendMessage = () => {
-    if (newMessage.trim() !== "") {
-      const newEntry = { user: "You", text: newMessage };
-      setMessages([...messages, newEntry]);
-      setNewMessage(""); // Clear input after sending
-      setNotification("New message !");
-      notificationSound.play(); // Play sound
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  // Handle posting a new review
+  const handleAddOrUpdateReview = async () => {
+    if (newComment.trim() !== "" && newRating > 0) {
+      const newReview = {
+        bidId: "someBidId", // Should be dynamically set based on the relevant bid
+        rating: newRating,
+        comment: newComment,
+        userId: "You",
+      };
+
+      if (editingReviewId) {
+        // Update existing review
+        const response = await fetch(`http://localhost:8084/api/avis/${editingReviewId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newReview),
+        });
+        const data = await response.json();
+        setReviews((prevReviews) =>
+          prevReviews.map((review) => (review.id === editingReviewId ? data : review))
+        );
+        setNotification("Review updated successfully!");
+      } else {
+        // Add new review
+        const response = await fetch("http://localhost:8084/api/avis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newReview),
+        });
+        const data = await response.json();
+        setReviews((prevReviews) => [...prevReviews, data]);
+        setNotification("Review added successfully!");
+      }
+
+      setNewComment("");
+      setNewRating(0);
+      setEditingReviewId(null);
     }
   };
 
-  // Automatically hide notification after a few seconds
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 3000);
-      return () => clearTimeout(timer);
+  // Handle deleting a review with confirmation dialog
+  const handleDeleteReview = async (reviewId) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this review?");
+    if (confirmDelete) {
+      await fetch(`http://localhost:8084/api/avis/${reviewId}`, {
+        method: "DELETE",
+      });
+      setReviews((prevReviews) => prevReviews.filter((review) => review.id !== reviewId));
+      setNotification("Review deleted!");
     }
-  }, [notification]);
+  };
 
-  // Update the tab title with unread messages count
-  useEffect(() => {
-    if (unreadCount > 0) {
-      document.title = `(${unreadCount}) Live Chat - Bidding Site`;
-    } else {
-      document.title = `Live Chat - Bidding Site`;
-    }
-  }, [unreadCount]);
+  // Handle setting a review for editing
+  const handleEditReview = (review) => {
+    setEditingReviewId(review.id);
+    setNewRating(review.rating);
+    setNewComment(review.comment);
+  };
 
-  // Increment unread count when new message is sent
-  useEffect(() => {
-    if (messages.length > 0) {
-      setUnreadCount((prev) => prev + 1);
-    }
-  }, [messages]);
+  // Display stars for rating
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <span key={i} className={`fa fa-star ${i < rating ? "text-yellow-400" : "text-gray-300"}`} />
+    ));
+  };
 
-  // Mark messages as read when user sends a new message
-  const handleNewMessage = () => {
-    handleSendMessage();
-    setUnreadCount(0); // Reset unread messages count
+  // Get the appropriate user avatar image
+  const getUserAvatar = (userId) => {
+    return userId === "You"
+      ? "https://cdn-icons-png.flaticon.com/128/6997/6997662.png"
+      : "https://cdn-icons-png.flaticon.com/128/236/236831.png";
   };
 
   return (
-    <div className="relative shadow-s1 p-8 rounded-lg h-[60vh] flex flex-col">
-      {/* Toaster Notification fixed on the viewport */}
+    <div className="relative bg-white shadow-lg p-8 rounded-lg my-8 max-w-3xl mx-auto border-t-4 border-green-500">
+      <h2 className="text-2xl font-semibold mb-5 text-center">User Reviews</h2>
+      
+      {/* Toaster Notification */}
       {notification && (
-        <div className="fixed bottom-4 right-4 bg-green-500 text-green p-4 rounded-lg shadow-lg z-50 border border-black">
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 border border-black">
           {notification}
         </div>
       )}
 
-      <Title level={5} className="font-normal">
-        Live Chat for Biddings
-      </Title>
+      {/* Review Submission/Editing Section */}
+      <div className="bg-gray-100 p-5 rounded-lg mb-6 shadow-sm">
+        <h3 className="font-medium text-lg mb-3">
+          {editingReviewId ? "Edit Review" : "Leave a Review"}
+        </h3>
+        <div className="flex items-center gap-3 mb-3">
+          <label className="text-gray-600">Rating:</label>
+          <select
+            value={newRating}
+            onChange={(e) => setNewRating(Number(e.target.value))}
+            className="p-2 border rounded-md"
+          >
+            <option value={0}>Select Rating</option>
+            {[1, 2, 3, 4, 5].map((rating) => (
+              <option key={rating} value={rating}>
+                {rating} Star{rating > 1 ? "s" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        <textarea
+          className="w-full p-3 border rounded-md mb-3"
+          placeholder="Write your comment here..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+        />
+        <button
+          onClick={handleAddOrUpdateReview}
+          className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition"
+        >
+          {editingReviewId ? "Update Review" : "Submit Review"}
+        </button>
+      </div>
+
+      {/* Reviews Display Section */}
+      <div className="reviews-list">
+        {reviews.map((review) => (
+          <div
+            key={review.id}
+            className="review-item bg-white p-4 rounded-md shadow mb-4 flex items-start group"
+          >
+            {/* User Image */}
+            <img
+              src={getUserAvatar(review.userId)}
+              alt="User profile"
+              className="w-10 h-10 rounded-full mr-4"
+            />
+            <div className="flex-grow">
+              <div className="flex justify-between items-center">
+                <h4 className="font-semibold">{review.userId}</h4>
+                <div className="flex gap-1">{renderStars(review.rating)}</div>
+              </div>
+              <p className="text-gray-600 mt-2">{review.comment}</p>
+              <p className="text-sm text-gray-400 mt-1">
+                {new Date(review.createdAt).toLocaleDateString()}{" "}
+                {new Date(review.createdAt).toLocaleTimeString()}
+              </p>
+              {/* Edit/Delete Actions */}
+              {review.userId === "You" && (
+                <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleEditReview(review)}
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteReview(review.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
+
+
+export const LiveChat = () => {
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [notification, setNotification] = useState(null);
+  const notificationSound = new Audio("/audio.wav");
+
+  // Fetch messages from the backend
+  const fetchMessages = async () => {
+    const response = await fetch("http://localhost:8082/api/commentaires");
+    const data = await response.json();
+    setMessages(data);
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  // Handle sending a new message
+  const handleSendMessage = async () => {
+    if (newMessage.trim() !== "") {
+      const newEntry = { userId: "You", description: newMessage };
+      const response = await fetch("http://localhost:8082/api/commentaires", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newEntry),
+      });
+      const data = await response.json();
+
+      setMessages((prevMessages) => [...prevMessages, data]);
+      setNewMessage("");
+      setNotification("New message sent!");
+      notificationSound.play();
+    }
+  };
+
+  // Handle editing a message
+  const handleEditMessage = async (messageId, newText) => {
+    const updatedMessage = { id: messageId, description: newText, userId: "You" };
+    const response = await fetch(`http://localhost:8082/api/commentaires/${messageId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedMessage),
+    });
+    const data = await response.json();
+
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) => (msg.id === messageId ? data : msg))
+    );
+    setNotification("Message updated!");
+  };
+
+  // Handle deleting a message with confirmation
+  const handleDeleteMessage = async (messageId) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this message?");
+    if (confirmDelete) {
+      await fetch(`http://localhost:8082/api/commentaires/${messageId}`, {
+        method: "DELETE",
+      });
+      setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== messageId));
+      setNotification("Message deleted!");
+    }
+  };
+
+  // Helper function to get a static avatar based on userId
+  const getUserAvatar = (userId) => {
+    return userId === "You"
+      ? "https://cdn-icons-png.flaticon.com/128/6997/6997662.png"  // Replace with actual path for "You"
+      : "https://cdn-icons-png.flaticon.com/128/236/236831.png"; // Replace with actual path for other users
+  };
+
+  return (
+    <div className="relative shadow-s1 p-8 rounded-lg h-[60vh] flex flex-col">
+      {notification && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 border border-black">
+          {notification}
+        </div>
+      )}
+
+      <h5 className="font-normal">Live Chat for Biddings</h5>
       <hr className="my-5" />
 
-      {/* Chat History Section */}
       <div className="flex-grow overflow-y-auto mb-5 p-3 bg-gray-100 rounded-lg">
-        {messages.map((msg, index) => (
-          <div key={index} className={`mb-3 ${msg.user === "You" ? "text-right" : ""}`}>
-            <Caption className="font-bold">{msg.user}:</Caption>
-            <Body className="bg-white p-2 rounded-md inline-block">{msg.text}</Body>
+        {messages.map((msg) => (
+          <div key={msg.id} className={`flex items-start gap-3 mb-3 ${msg.userId === "You" ? "text-right flex-row-reverse" : ""}`}>
+            <img
+              src={getUserAvatar(msg.userId)}
+              alt="User avatar"
+              className="w-8 h-8 rounded-full object-cover"
+            />
+            <div className="bg-white p-2 rounded-md inline-block relative group">
+              <p className="font-bold">{msg.userId === "You" ? "You" : msg.userId}:</p>
+              {msg.description}
+              {msg.userId === "You" && (
+                <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <button
+                    onClick={() => handleEditMessage(msg.id, prompt("Edit message:", msg.description))}
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMessage(msg.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Input Box and Send Button */}
       <div className="flex gap-3">
         <input
           type="text"
@@ -339,11 +549,14 @@ export const LiveChat = () => {
           onChange={(e) => setNewMessage(e.target.value)}
         />
         <button
-          onClick={handleNewMessage}
-          className="bg-green px-8 py-2 rounded-full text-primary shadow-md">
+          onClick={handleSendMessage}
+          className="bg-green px-8 py-2 rounded-full text-primary shadow-md"
+        >
           Send
         </button>
       </div>
     </div>
   );
 };
+
+
