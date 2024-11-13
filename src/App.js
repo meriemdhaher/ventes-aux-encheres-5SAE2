@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import {
   LoginAsSeller,
@@ -23,6 +24,9 @@ import {
   NotFound,
   ScrollToTop,
   PrivateRoute,
+  OffersPage,
+  OfferForm,
+  OfferDetail,
 } from "./router/index.js";
 
 function App() {
@@ -102,13 +106,16 @@ function App() {
             }
           />
           <Route
-            path="/details/:id"
+            path="/details/:offerId"
             element={
               <Layout>
                 <ProductsDetailsPage />
               </Layout>
             }
           />
+            <Route path="/offer/create" element={<PrivateRoute><Layout><OfferForm /></Layout></PrivateRoute>} />
+  <Route path="/edit-offer/:offerId" element={<PrivateRoute><Layout><OfferForm /></Layout></PrivateRoute>} />
+  <Route path="/offer/:offerId" element={<Layout><OfferDetail /></Layout>} />
           <Route
             path="/dashboard"
             element={
@@ -121,6 +128,8 @@ function App() {
               </PrivateRoute>
             }
           />
+           <Route path="/offers" element={<Layout><OffersPage /></Layout>} />
+
           <Route
             path="/product"
             element={

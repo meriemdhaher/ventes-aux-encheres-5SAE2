@@ -249,7 +249,7 @@ export const Reviews = () => {
 
   // Fetch reviews from the backend
   const fetchReviews = async () => {
-    const response = await fetch("http://localhost:8084/api/avis");
+    const response = await fetch("http://localhost:8080/api/avis");
     const data = await response.json();
     setReviews(data);
   };
@@ -258,6 +258,10 @@ export const Reviews = () => {
     fetchReviews();
   }, []);
 
+
+
+  
+////////////////////////////////////////////////////////
   // Handle posting a new review
   const handleAddOrUpdateReview = async () => {
     if (newComment.trim() !== "" && newRating > 0) {
@@ -435,7 +439,7 @@ export const LiveChat = () => {
 
   // Fetch messages from the backend
   const fetchMessages = async () => {
-    const response = await fetch("http://localhost:8082/api/commentaires");
+    const response = await fetch("http://localhost:8080/api/commentaires");
     const data = await response.json();
     setMessages(data);
   };
@@ -443,6 +447,15 @@ export const LiveChat = () => {
   useEffect(() => {
     fetchMessages();
   }, []);
+
+
+  /////////////////////////////////////////////////
+
+
+
+
+
+
 
   // Handle sending a new message
   const handleSendMessage = async () => {

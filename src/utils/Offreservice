@@ -1,0 +1,97 @@
+// Define your API base URL
+const API_URL = 'http://localhost:8080/api/offers';
+
+// Helper function to handle Fetch API responses
+const handleResponse = async (response) => {
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+  }
+  return response.json();
+};
+
+// 1. Get all offers
+const getAllOffers = async () => {
+  try {
+    const response = await fetch(API_URL, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error fetching offers:', error);
+    throw error;
+  }
+};
+
+// 2. Get an offer by ID
+const getOfferById = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/${id}`);
+    return await handleResponse(response);
+  } catch (error) {
+    console.error(`Error fetching offer with ID ${id}:`, error);
+    return null;
+  }
+};
+
+// 3. Create a new offer
+const createOffer = async (offer) => {
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(offer),
+    });
+    const data = await handleResponse(response);
+    console.log('Offer created:', data);
+    return data;
+  } catch (error) {
+    console.error('Error creating offer:', error);
+    return null;
+  }
+};
+
+// 4. Update an offer
+const updateOffer = async (id, updatedOffer) => {
+  try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedOffer),
+    });
+    const data = await handleResponse(response);
+    console.log('Offer updated:', data);
+    return data;
+  } catch (error) {
+    console.error(`Error updating offer with ID ${id}:`, error);
+    return null;
+  }
+};
+
+// 5. Delete an offer
+const deleteOffer = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await handleResponse(response);
+    console.log(`Offer with ID ${id} deleted`, data);
+    return data;
+  } catch (error) {
+    console.error(`Error deleting offer with ID ${id}:`, error);
+    return null;
+  }
+};
+
+// Export the functions
+export { getAllOffers, getOfferById, createOffer, updateOffer, deleteOffer };

@@ -51,3 +51,8 @@ export { Register } from "../screens/auth/Register";
 export { Login } from "../screens/auth/Login";
 export { LoginAsSeller } from "../screens/auth/LoginAsSeller";
 export { UserProfile } from "../screens/auth/UserProfile";
+// ./router/index.js
+export { default as OfferList } from "../components/OfferList";
+export { default as OfferForm } from "../components/OfferForm";
+export { default as OfferDetail } from "../components/OfferDetail";
+export { default as OffersPage } from "../components/OfferPage";
